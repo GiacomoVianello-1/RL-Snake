@@ -17,7 +17,7 @@ class BaseEnvironment:
     def __init__(self, n_boards, board_size):
         self.WIN_REWARD = 10.0
         self.FRUIT_REWARD = 1.5
-        self.STEP_REWARD = -0.01
+        self.STEP_REWARD = 0
         self.ATE_HIMSELF_REWARD = -1.0
         self.HIT_WALL_REWARD = -2.0
 
