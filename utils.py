@@ -8,6 +8,7 @@ import matplotlib.animation as animation
 from IPython.display import HTML
 import pandas as pd
 import os
+import pickle
 
 
 # Check for GPU availability (CUDA for Nvidia, MPS for Apple Silicon)
@@ -283,3 +284,55 @@ def display_game(model, agent_name="Agent", max_steps=100):
     )
 
     plt.show()
+
+# UTILTY FUNCTION TO SAVE TRAINING RESULTS
+def save_training_results(
+    algo_name,
+    model,
+    reward_hist,
+    fruits_hist,
+    deaths_hist,
+    extra_metrics=None,
+    params=None,
+    save_dir="results",
+    save=True
+):
+    """
+    Save model weights and training data for any RL algorithm.
+    """
+
+    # If saving is disabled, exit gracefully
+    if not save:
+        print(f"[INFO] Saving disabled --> skipping save for {algo_name}")
+        return
+
+    # Create directory
+    algo_dir = os.path.join(save_dir, algo_name)
+    os.makedirs(algo_dir, exist_ok=True)
+
+    # Detect the actual PyTorch model inside the agent
+    if hasattr(model, "state_dict"):
+        torch_model = model
+    elif hasattr(model, "net"):
+        torch_model = model.net
+    else:
+        raise ValueError(f"Cannot find a PyTorch model inside {algo_name} agent")
+
+    # Save weights
+    torch.save(torch_model.state_dict(), os.path.join(algo_dir, f"{algo_name}_weights.pt"))
+
+    # Save training data
+    data = {
+        "reward_hist": reward_hist,
+        "fruits_hist": fruits_hist,
+        "deaths_hist": deaths_hist,
+        "params": params or {},
+    }
+
+    if extra_metrics is not None:
+        data.update(extra_metrics)
+
+    with open(os.path.join(algo_dir, f"{algo_name}_training.pkl"), "wb") as f:
+        pickle.dump(data, f)
+
+    print(f"Saved {algo_name} results in {algo_dir}")

@@ -3,12 +3,12 @@ import numpy as np
 import pandas as pd
 import pickle
 
-
-from train import NUM_BOARDS, BOARD_SIZE
 from utils import device, get_env, make_env, plot_training_curves, plot_comparison_curves, display_game
 from models import A2CNet, DDQNNet
 from agents import PPOAgent
 
+NUM_BOARDS = 1000
+BOARD_SIZE = 7
 EVAL_STEPS = 100
 SAVE_PLOTS = False
 
