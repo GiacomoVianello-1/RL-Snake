@@ -92,7 +92,7 @@ def plot_training_curves(
 
     # Reward
     plt.subplot(1, 3, 1)
-    plt.plot(reward_hist, color='lightblue', alpha=0.5, linewidth=1, label="Raw Reward")
+    plt.plot(reward_hist, color='lightblue', alpha=0.3, linewidth=1, label="Raw Reward")
     plt.plot(reward_moving, color='blue', linewidth=2.5, label="Moving Average")
     plt.axhline(y=baseline_reward, color='black', linestyle='--', linewidth=2, label="Baseline")
     plt.title(f"{algo_name.upper()} – Reward per Step")
@@ -103,7 +103,7 @@ def plot_training_curves(
 
     # Fruits
     plt.subplot(1, 3, 2)
-    plt.plot(fruits_hist, color='lightgreen', alpha=0.5, linewidth=1, label="Raw Fruits")
+    plt.plot(fruits_hist, color='lightgreen', alpha=0.3, linewidth=1, label="Raw Fruits")
     plt.plot(fruits_moving, color='green', linewidth=2.5, label="Moving Average")
     plt.axhline(y=baseline_fruits, color='black', linestyle='--', linewidth=2, label="Baseline")
     plt.title(f"{algo_name.upper()} – Fruits per Step")
@@ -114,7 +114,7 @@ def plot_training_curves(
 
     # Wall collisions
     plt.subplot(1, 3, 3)
-    plt.plot(wall_hist, color='lightcoral', alpha=0.5, linewidth=1, label="Raw Collisions")
+    plt.plot(wall_hist, color='lightcoral', alpha=0.3, linewidth=1, label="Raw Collisions")
     plt.plot(wall_moving, color='red', linewidth=2.5, label="Moving Average")
     plt.axhline(y=baseline_wall, color='black', linestyle='--', linewidth=2, label="Baseline")
     plt.title(f"{algo_name.upper()} – Wall Collisions per Step")

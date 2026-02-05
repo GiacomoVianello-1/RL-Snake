@@ -10,7 +10,7 @@ from agents import PPOAgent
 NUM_BOARDS = 1000
 BOARD_SIZE = 7
 EVAL_STEPS = 100
-SAVE_PLOTS = False
+SAVE_PLOTS = True
 
 # ===============
 # BASELINE POLICY
@@ -181,6 +181,7 @@ if __name__ == "__main__":
 
     
     # Additional Baseline Evaluation Table (SKIP as it requires so much time to run...)
+    '''
     print("\n--- Baseline Evaluation at Multiple Horizons ---")
 
     baseline_steps = [100, 1000, 10000]
@@ -203,7 +204,7 @@ if __name__ == "__main__":
     print("\nBaseline Performance Across Different Evaluation Horizons:\n")
     print(df_baseline)
     print("\n")
-    
+    '''
 
     print("** Running Baseline **")
     b_fruit, b_wall, b_rew = evaluate_baseline(EVAL_STEPS)
