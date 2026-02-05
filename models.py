@@ -24,7 +24,7 @@ class PPOActorCritic(nn.Module):
         self.value_head = nn.Linear(128, 1)
 
     def forward(self, x) -> Tuple[torch.Tensor, torch.Tensor]:
-        x = x.permute(0, 3, 1, 2)          # (N, H, W, C) -> (N, C, H, W)
+        x = x.permute(0, 3, 1, 2)          # (N, H, W, C) --> (N, C, H, W)
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
         x = F.relu(self.conv3(x))
@@ -68,7 +68,7 @@ class A2CNet(nn.Module):
         self.value = nn.Linear(flat, 1)
 
     def forward(self, x):
-        x = x.permute(0,3,1,2)  # NHWC → NCHW
+        x = x.permute(0,3,1,2)  # NHWC --> NCHW
         x = self.conv(x)
         x = x.reshape(x.size(0), -1)
         return self.policy(x), self.value(x).squeeze(-1)
@@ -88,7 +88,7 @@ class DDQNNet(nn.Module):
         self.q_head = nn.Linear(flat, n_actions)
 
     def forward(self, x):
-        x = x.permute(0,3,1,2)  # NHWC → NCHW
+        x = x.permute(0,3,1,2)  # NHWC --> NCHW
         x = self.conv(x)
         x = x.reshape(x.size(0), -1)
         return self.q_head(x)   # (B, n_actions)

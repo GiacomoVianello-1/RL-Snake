@@ -10,7 +10,7 @@ from agents import PPOAgent
 NUM_BOARDS = 1000
 BOARD_SIZE = 7
 EVAL_STEPS = 100
-SAVE_PLOTS = True
+SAVE_PLOTS = False
 
 # ===============
 # BASELINE POLICY
@@ -181,22 +181,50 @@ if __name__ == "__main__":
         print(f"❌ Failed to load PPO: {e}")
         ppo_agent = None
 
-    print("\n--- Running Baseline ---")
+    print("\n ==== EVALUATION ====\n")
+
+    
+    # Additional Baseline Evaluation Table (SKIP as it requires so much time to run...)
+    print("\n--- Baseline Evaluation at Multiple Horizons ---")
+
+    baseline_steps = [100, 1000, 10000]
+    baseline_results = {}
+
+    for steps in baseline_steps:
+        print(f"Evaluating baseline for {steps} steps...")
+        b_fruit, b_wall, b_rew = evaluate_baseline(steps)
+        baseline_results[f"{steps} steps"] = [
+            np.mean(b_rew),
+            np.mean(b_fruit),
+            np.mean(b_wall)
+        ]
+
+    df_baseline = pd.DataFrame(
+        baseline_results,
+        index=["Reward (Avg)", "Fruits (Avg)", "Wall hits (Avg)"]
+    )
+
+    print("\nBaseline Performance Across Different Evaluation Horizons:\n")
+    print(df_baseline)
+    print("\n")
+    
+
+    print("** Running Baseline **")
     b_fruit, b_wall, b_rew = evaluate_baseline(EVAL_STEPS)
     results["Baseline"] = [b_rew, b_fruit, b_wall]
 
     if a2c_agent:
-        print("--- Running A2C ---")
+        print("** Running A2C **")
         a_fruit, a_wall, a_rew = evaluate_agent(a2c_agent, EVAL_STEPS)
         results["A2C"] = [np.mean(a_rew), np.mean(a_fruit), np.mean(a_wall)]
 
     if ddqn_agent:
-        print("--- Running DDQN ---")
+        print("** Running DDQN **")
         d_fruit, d_wall, d_rew = evaluate_agent(ddqn_agent, EVAL_STEPS)
         results["DDQN"] = [np.mean(d_rew), np.mean(d_fruit), np.mean(d_wall)]
     
     if ppo_agent:
-        print("--- Running PPO ---")
+        print("** Running PPO **")
         p_fruit, p_wall, p_rew = evaluate_agent(ppo_agent, EVAL_STEPS)
         results["PPO"] = [np.mean(p_rew), np.mean(p_fruit), np.mean(p_wall)]
     

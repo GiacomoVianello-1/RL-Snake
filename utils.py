@@ -38,6 +38,12 @@ def get_env(n=1000):
 
 # Safety mask fuction: checks for unsafe moves for all boards
 def get_safety_mask(env):
+    '''
+    For each parallel board, identifies the current coordinates of the snake's head and calculates 
+    the potential next position for each of the four cardinal moves: UP, RIGHT, DOWN, and LEFT. 
+    If a projected move targets a cell occupied by a WALL (represented by value 0), 
+    the corresponding action is flagged as "unsafe" in a boolean mask.
+    '''
     masks = np.zeros((env.n_boards, 4), dtype=np.float32)
     heads = np.argwhere(env.boards == env.HEAD)
     heads = heads[heads[:, 0].argsort()]
