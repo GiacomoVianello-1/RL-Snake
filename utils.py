@@ -164,10 +164,10 @@ def plot_comparison_curves(
 
     # REWARD COMPARISON
     plt.subplot(1, 3, 1)
+    plt.axhline(baseline_reward, color="black", linestyle="--", linewidth=2, label="Baseline")
     plt.plot(a2c_r, label="A2C", linewidth=2)
     plt.plot(ddqn_r, label="DDQN", linewidth=2)
     plt.plot(ppo_r, label="PPO", linewidth=2)
-    plt.axhline(baseline_reward, color="black", linestyle="--", linewidth=2, label="Baseline")
     plt.title("Reward per Step (Moving Average)")
     plt.xlabel("Training Step")
     plt.ylabel("Reward")
@@ -176,10 +176,10 @@ def plot_comparison_curves(
 
     # FRUITS COMPARISON
     plt.subplot(1, 3, 2)
+    plt.axhline(baseline_fruits, color="black", linestyle="--", linewidth=2, label="Baseline")
     plt.plot(a2c_f, label="A2C", linewidth=2)
     plt.plot(ddqn_f, label="DDQN", linewidth=2)
     plt.plot(ppo_f, label="PPO", linewidth=2)
-    plt.axhline(baseline_fruits, color="black", linestyle="--", linewidth=2, label="Baseline")
     plt.title("Fruits per Step (Moving Average)")
     plt.xlabel("Training Step")
     plt.ylabel("Fruits")
@@ -188,10 +188,10 @@ def plot_comparison_curves(
 
     # WALL COLLISIONS
     plt.subplot(1, 3, 3)
+    plt.axhline(baseline_wall, color="black", linestyle="--", linewidth=2, label="Baseline")
     plt.plot(a2c_w, label="A2C", linewidth=2)
     plt.plot(ddqn_w, label="DDQN", linewidth=2)
     plt.plot(ppo_w, label="PPO", linewidth=2)
-    plt.axhline(baseline_wall, color="black", linestyle="--", linewidth=2, label="Baseline")
     plt.title("Wall Collisions per Step (Moving Average)")
     plt.xlabel("Training Step")
     plt.ylabel("Collisions")
