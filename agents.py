@@ -67,7 +67,7 @@ class PPOAgent:
         board_size=7,
         n_actions=4,
         lr=4e-4,
-        gamma=0.99,
+        gamma=0.995,
         lam=0.95,
         clip_eps=0.2,
         epochs=4,

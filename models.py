@@ -59,19 +59,33 @@ class PPOActorCritic(nn.Module):
 class A2CNet(nn.Module):
     def __init__(self, board_size=7, n_channels=4, n_actions=4):
         super().__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(n_channels, 32, 3, padding=1), nn.ReLU(),
-            nn.Conv2d(32, 64, 3, padding=1), nn.ReLU(),
-        )
-        flat = board_size * board_size * 64
-        self.policy = nn.Linear(flat, n_actions)
-        self.value = nn.Linear(flat, 1)
+        self.conv1 = nn.Conv2d(n_channels, 32, 3, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, 3, padding=1)
+        self.conv3 = nn.Conv2d(64, 128, 3, padding=1)
+        
+        self.board_size = board_size
+        conv_out_dim = 128 * board_size * board_size
+        self.fc = nn.Linear(conv_out_dim, 128)
+        self.policy_head = nn.Linear(128, n_actions)
+        self.value_head = nn.Linear(128, 1)
 
     def forward(self, x):
         x = x.permute(0,3,1,2)  # NHWC --> NCHW
-        x = self.conv(x)
+
+        # Feature extraction
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+
+        # Flatten and dense processing
         x = x.reshape(x.size(0), -1)
-        return self.policy(x), self.value(x).squeeze(-1)
+        x = F.relu(self.fc(x))
+
+        # Output heads
+        logits = self.policy_head(x)
+        value = self.value_head(x).squeeze(-1)
+        
+        return logits, value
     
 # ==================
 # Double DQN Network
@@ -80,15 +94,28 @@ class A2CNet(nn.Module):
 class DDQNNet(nn.Module):
     def __init__(self, board_size=7, n_channels=4, n_actions=4):
         super().__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(n_channels, 32, 3, padding=1), nn.ReLU(),
-            nn.Conv2d(32, 64, 3, padding=1), nn.ReLU(),
-        )
-        flat = board_size * board_size * 64
-        self.q_head = nn.Linear(flat, n_actions)
+        self.conv1 = nn.Conv2d(n_channels, 32, 3, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, 3, padding=1)
+        self.conv3 = nn.Conv2d(64, 128, 3, padding=1)
+
+        self.board_size = board_size
+        conv_out_dim = 128 * board_size * board_size
+
+        # Intermediate fully connected layer for non-linear feature refinement
+        self.fc = nn.Linear(conv_out_dim, 128)
+
+        # Q-value head: outputs an estimated value for each action
+        self.q_head = nn.Linear(128, n_actions)
 
     def forward(self, x):
-        x = x.permute(0,3,1,2)  # NHWC --> NCHW
-        x = self.conv(x)
+        # Convolutional layers with ReLU activations
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+
+        # Flatten and process through the dense layer
         x = x.reshape(x.size(0), -1)
-        return self.q_head(x)   # (B, n_actions)
+        x = F.relu(self.fc(x))
+
+        # Output the Q-values for each of the 4 actions
+        return self.q_head(x)

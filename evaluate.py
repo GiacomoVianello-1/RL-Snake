@@ -87,7 +87,6 @@ def evaluate_baseline(steps=1000):
         np.mean(np.array(reward_means))
     )
 
-# Evaluate agent performance
 def evaluate_agent(agent, steps=1000):
     env = get_env(n=NUM_BOARDS)
     fruits = []
@@ -95,31 +94,28 @@ def evaluate_agent(agent, steps=1000):
     rewards_mean = []
 
     for _ in range(steps):
-        state = env.to_state()
+        state = env.to_state()  # (N, H, W, C)
         state_tensor = torch.tensor(state, dtype=torch.float32, device=device)
 
         with torch.no_grad():
 
-            # PPO agent → has .net
+            # PPO agent --> has .net
             if hasattr(agent, "net"):
                 logits, _ = agent.net(state_tensor)
                 dist = torch.distributions.Categorical(logits=logits)
                 actions = dist.sample().cpu().numpy().reshape(-1, 1)
 
+            # DDQN agent --> class is DDQNNet
+            elif isinstance(agent, DDQNNet):
+                s_tensor_nchw = state_tensor.permute(0, 3, 1, 2)
+                q_values = agent(s_tensor_nchw)
+                actions = torch.argmax(q_values, dim=-1).cpu().numpy().reshape(-1, 1)
+
+            # A2C agent --> returns (logits, value)
             else:
-                # A2C or DDQN
-                out = agent(state_tensor)
-
-                # A2C returns (logits, value)
-                if isinstance(out, tuple):
-                    logits, _ = out
-                    dist = torch.distributions.Categorical(logits=logits)
-                    actions = dist.sample().cpu().numpy().reshape(-1, 1)
-
-                else:
-                    # DDQN returns Q-values
-                    q_values = out
-                    actions = torch.argmax(q_values, dim=-1).cpu().numpy().reshape(-1, 1)
+                logits, _ = agent(state_tensor)
+                dist = torch.distributions.Categorical(logits=logits)
+                actions = dist.sample().cpu().numpy().reshape(-1, 1)
 
         rewards = env.move(actions).cpu().numpy().flatten()
 

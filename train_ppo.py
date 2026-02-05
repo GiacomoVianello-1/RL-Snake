@@ -13,7 +13,7 @@ from agents import PPOAgent, RolloutBuffer, ReplayBuffer
 # GLOBAL PARAMETERS
 NUM_BOARDS = 1000       # Number of parallel boards to simulate
 BOARD_SIZE = 7          # Size of each board (including borders)
-ITERATIONS = 10000000   # Total training steps (a lot, but we use torch and GPU support for this reason!)
+ITERATIONS = 20_000_000 # Total training steps (a lot, but we use torch and GPU support for this reason!)
 SAVE_RESULTS = False    # Whether to save the trained models and results
 
 # =====================

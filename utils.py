@@ -9,6 +9,7 @@ from IPython.display import HTML
 import pandas as pd
 import os
 import pickle
+from models import DDQNNet
 
 
 # Check for GPU availability (CUDA for Nvidia, MPS for Apple Silicon)
@@ -233,22 +234,23 @@ def display_game(model, agent_name="Agent", max_steps=100):
 
         with torch.no_grad():
 
-            if hasattr(model, "net"):   # PPO
+            # PPO AGENT
+            if hasattr(model, "net"):
                 logits, _ = model.net(state_tensor)
                 logits = logits + mask * -1.0
                 actions = torch.argmax(logits, dim=1)
 
+            # DDQN AGENT (must detect BEFORE calling model)
+            elif isinstance(model, DDQNNet):
+                s_tensor_nchw = state_tensor.permute(0, 3, 1, 2)
+                q_values = model(s_tensor_nchw)
+                actions = torch.argmax(q_values, dim=1)
+
+            # A2C AGENT
             else:
-                out = model(state_tensor)
-
-                if isinstance(out, tuple):   # A2C
-                    logits, _ = out
-                    logits = logits + mask * -1.0
-                    actions = torch.argmax(logits, dim=1)
-
-                else:                        # DDQN
-                    q_values = out
-                    actions = torch.argmax(q_values, dim=1)
+                logits, _ = model(state_tensor)
+                logits = logits + mask * -1.0
+                actions = torch.argmax(logits, dim=1)
 
         actions_np = actions.cpu().numpy().reshape(-1, 1)
 
@@ -257,7 +259,9 @@ def display_game(model, agent_name="Agent", max_steps=100):
 
         frames.append(game_env.boards[0].copy())
 
-    # 1. STATIC SNAPSHOTS EVERY 10 STEPS
+    # -----------------------------------------
+    # 1. STATIC SNAPSHOTS
+    # -----------------------------------------
     snapshot_steps = [0, 10, 20, 30, 40]
     snapshot_steps = [s for s in snapshot_steps if s < len(frames)]
 
@@ -270,7 +274,9 @@ def display_game(model, agent_name="Agent", max_steps=100):
 
     plt.show()
 
+    # -----------------------------------------
     # 2. ANIMATION
+    # -----------------------------------------
     fig, ax = plt.subplots(figsize=(5, 5))
     plt.axis('off')
 

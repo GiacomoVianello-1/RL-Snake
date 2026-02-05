@@ -2,16 +2,17 @@ import torch
 import torch.optim as optim
 import numpy as np
 from tqdm import tqdm
-from utils import device, make_env, set_seed, save_training_results
+import os
+from utils import device, make_env, set_seed, save_training_results, get_safety_mask
 from models import A2CNet
 
 # --- CONFIGURATION ---
 NUM_BOARDS = 1000
 BOARD_SIZE = 7
-ITERATIONS = 2_000_000
+ITERATIONS = 20_000_000
 SAVE_RESULTS = False
 
-def train_a2c(total_steps, n_boards, board_size):
+def train_a2c(total_steps=2_000_000, n_boards=NUM_BOARDS, board_size=7):
     env = make_env(n_boards=n_boards, board_size=board_size)
     net = A2CNet(board_size=board_size).to(device)
     optimizer = optim.Adam(net.parameters(), lr=1e-4)
@@ -19,29 +20,50 @@ def train_a2c(total_steps, n_boards, board_size):
     state = env.to_state()
     step_count = 0
     pbar = tqdm(total=total_steps, desc="Training A2C")
-    gamma = 0.99
 
-    reward_hist, fruits_hist, deaths_hist = [], [], []
+    gamma = 0.995
+
+    # Logging buffers
+    reward_history = []
+    fruits_history = []
+    deaths_history = []
+    policy_loss_hist = []
+    value_loss_hist = []
+    entropy_hist = []
+
     last_log_step = 0
-    log_interval = 500_000
+    log_interval = 750_000
 
     while step_count < total_steps:
         s = torch.tensor(state, dtype=torch.float32, device=device)
+
+        # Forward pass
         logits, v_s = net(s)
+
+        # Safety Mask
+        mask = get_safety_mask(env)
+        mask_tensor = mask.to(device)
+        penalty = -1
+        logits = logits + penalty * mask_tensor
+
         dist = torch.distributions.Categorical(logits=logits)
         a = dist.sample()
 
+        # Step environment
         rewards = env.move(a.cpu().numpy().reshape(-1,1))
         r = rewards.cpu().numpy().flatten()
         next_state = env.to_state()
 
+        # Bootstrap V(s')
         with torch.no_grad():
             s_next = torch.tensor(next_state, dtype=torch.float32, device=device)
             _, v_next = net(s_next)
 
+        # TD error δ = r + γV(s') − V(s)
         r_t = torch.tensor(r, dtype=torch.float32, device=device)
         delta = r_t + gamma * v_next - v_s
 
+        # Losses
         logprobs = dist.log_prob(a)
         policy_loss = -(logprobs * delta.detach()).mean()
         value_loss = delta.pow(2).mean()
@@ -53,20 +75,35 @@ def train_a2c(total_steps, n_boards, board_size):
         loss.backward()
         optimizer.step()
 
+        # Update state
         state = next_state
         step_count += n_boards
         pbar.update(n_boards)
 
-        reward_hist.append(np.mean(r))
-        fruits_hist.append(np.sum(r == env.FRUIT_REWARD))
-        deaths_hist.append(np.sum(r == env.HIT_WALL_REWARD))
+        # Store metrics
+        reward_history.append(np.mean(r))
+        fruits_history.append(np.sum(r == env.FRUIT_REWARD))
+        deaths_history.append(np.sum(r == env.HIT_WALL_REWARD))
+        policy_loss_hist.append(policy_loss.item())
+        value_loss_hist.append(value_loss.item())
+        entropy_hist.append(entropy.item())
 
+        # Periodic logging
         if step_count - last_log_step >= log_interval:
             last_log_step = step_count
-            tqdm.write(f"Steps: {step_count:,} | Reward: {np.mean(reward_hist[-500:]):.3f}")
+            tqdm.write(
+                f"\nSteps: {step_count:,}"
+                f"\n  Reward (last 500): {np.mean(reward_history[-500:]):.3f}"
+                f"\n  Fruits (last 500): {np.mean(fruits_history[-500:]):.2f}"
+                f"\n  Deaths (last 500): {np.mean(deaths_history[-500:]):.2f}"
+                f"\n  Policy Loss (last 500): {np.mean(policy_loss_hist[-500:]):.4f}"
+                f"\n  Value Loss  (last 500): {np.mean(value_loss_hist[-500:]):.4f}"
+                f"\n  Entropy     (last 500): {np.mean(entropy_hist[-500:]):.4f}"
+            )
 
     pbar.close()
-    return net, reward_hist, fruits_hist, deaths_hist
+
+    return net, reward_history, fruits_history, deaths_history
 
 if __name__ == "__main__":
     set_seed(0)

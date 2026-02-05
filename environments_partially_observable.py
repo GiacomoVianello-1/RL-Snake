@@ -15,11 +15,11 @@ class BaseEnvironment:
     NONE = 4
 
     def __init__(self, n_boards, board_size, mask_size):
-        self.WIN_REWARD = 1.
-        self.FRUIT_REWARD = .5
-        self.STEP_REWARD = 0.
-        self.ATE_HIMSELF_REWARD = -.2
-        self.HIT_WALL_REWARD = -.1
+        self.WIN_REWARD = 10.            # originally = 1.0,  but good = 10
+        self.FRUIT_REWARD = 0.5          # originally = 0.5,  leave as it is
+        self.STEP_REWARD = -0.01         # originally = 0.0,  but good = -0.01
+        self.ATE_HIMSELF_REWARD = -.5    # originally = -0.2, but good = -1.0
+        self.HIT_WALL_REWARD = -.1       # originally = -0.1, leave it as it is
 
         self.board_size = board_size
         self.n_boards = n_boards
