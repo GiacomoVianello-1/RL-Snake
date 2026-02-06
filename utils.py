@@ -29,13 +29,18 @@ def set_seed(seed=0):
     import random
     random.seed(seed)
 
-# Full Environment wrapper
+# ====================
+# Environment wrapper
+# ====================
+
+# Fully observable
+
 def make_env(n_boards, board_size):
     return environments_fully_observable.OriginalSnakeEnvironment(n_boards,board_size)
 
 def get_env(n=1000):
     size = 7
-    return make_env(n, size)
+    return make_env(n, size) 
 
 # Safety mask fuction: checks for unsafe moves for all boards
 def get_safety_mask(env):
@@ -58,8 +63,9 @@ def get_safety_mask(env):
                 masks[b, a] = 1.0   # unsafe for wall
     return torch.tensor(masks, device=device)
 
-# Plotting Stuff
-# Plot training curves (for comparison)
+# === Plotting Stuff ===
+
+# Plot training curves
 def plot_training_curves(
     algo_name,
     reward_hist,
@@ -72,13 +78,25 @@ def plot_training_curves(
     window=200,
     save=False
 ):
-    """
-    Generate and save training curves (reward, fruits, wall collisions)
-    for any RL algorithm: PPO, A2C, DDQN.
-    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import os
+    from matplotlib.ticker import MaxNLocator
 
     # Create directory if missing
     os.makedirs(save_dir, exist_ok=True)
+
+    # Aesthetics
+    plt.rcParams.update({
+        "font.family": "serif",
+        "font.size": 12,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "axes.grid": True,
+        "grid.alpha": 0.25,
+        "legend.frameon": False,
+        "figure.dpi": 150
+    })
 
     # Moving average
     kernel = np.ones(window) / window
@@ -86,52 +104,76 @@ def plot_training_curves(
     fruits_moving = np.convolve(fruits_hist, kernel, mode='valid')
     wall_moving = np.convolve(wall_hist, kernel, mode='valid')
 
-    # Plot
-    plt.figure(figsize=(15, 4))
-    plt.rcParams.update({'font.size': 12})
+    # Colors (scientific palette)
+    colors = {
+        "raw_reward": "#9ecae1",
+        "smooth_reward": "#3182bd",
+        "raw_fruits": "#a1d99b",
+        "smooth_fruits": "#31a354",
+        "raw_wall": "#fcbba1",
+        "smooth_wall": "#e34a33",
+    }
 
-    # Reward
-    plt.subplot(1, 3, 1)
-    plt.plot(reward_hist, color='lightblue', alpha=0.3, linewidth=1, label="Raw Reward")
-    plt.plot(reward_moving, color='blue', linewidth=2.5, label="Moving Average")
-    plt.axhline(y=baseline_reward, color='black', linestyle='--', linewidth=2, label="Baseline")
-    plt.title(f"{algo_name.upper()} – Reward per Step")
-    plt.xlabel("Training Step")
-    plt.ylabel("Reward")
-    plt.legend(fontsize='x-small')
-    plt.grid(True, alpha=0.3)
+    fig, axes = plt.subplots(1, 3, figsize=(17, 4))
 
-    # Fruits
-    plt.subplot(1, 3, 2)
-    plt.plot(fruits_hist, color='lightgreen', alpha=0.3, linewidth=1, label="Raw Fruits")
-    plt.plot(fruits_moving, color='green', linewidth=2.5, label="Moving Average")
-    plt.axhline(y=baseline_fruits, color='black', linestyle='--', linewidth=2, label="Baseline")
-    plt.title(f"{algo_name.upper()} – Fruits per Step")
-    plt.xlabel("Training Step")
-    plt.ylabel("Fruits")
-    plt.legend(fontsize='x-small')
-    plt.grid(True, alpha=0.3)
+    # --- REWARD ---
+    ax = axes[0]
+    ax.plot(reward_hist, color=colors["raw_reward"], alpha=0.4, linewidth=1)
+    ax.plot(reward_moving, color=colors["smooth_reward"], linewidth=2)
+    ax.axhline(baseline_reward, color="black", linestyle="--", linewidth=1.5)
+    ax.set_title(f"{algo_name.upper()} – Reward per Step")
+    ax.set_xlabel("Training Step")
+    ax.set_ylabel("Reward")
 
-    # Wall collisions
-    plt.subplot(1, 3, 3)
-    plt.plot(wall_hist, color='lightcoral', alpha=0.3, linewidth=1, label="Raw Collisions")
-    plt.plot(wall_moving, color='red', linewidth=2.5, label="Moving Average")
-    plt.axhline(y=baseline_wall, color='black', linestyle='--', linewidth=2, label="Baseline")
-    plt.title(f"{algo_name.upper()} – Wall Collisions per Step")
-    plt.xlabel("Training Step")
-    plt.ylabel("Wall Collisions")
-    plt.legend(fontsize='x-small')
-    plt.grid(True, alpha=0.3)
+    # --- FRUITS ---
+    ax = axes[1]
+    ax.plot(fruits_hist, color=colors["raw_fruits"], alpha=0.4, linewidth=1)
+    ax.plot(fruits_moving, color=colors["smooth_fruits"], linewidth=2)
+    ax.axhline(baseline_fruits, color="black", linestyle="--", linewidth=1.5)
+    ax.set_title(f"{algo_name.upper()} – Fruits per Step")
+    ax.set_xlabel("Training Step")
+    ax.set_ylabel("Fruits")
 
-    plt.tight_layout()
+    # --- WALL COLLISIONS ---
+    ax = axes[2]
+    ax.plot(wall_hist, color=colors["raw_wall"], alpha=0.4, linewidth=1)
+    ax.plot(wall_moving, color=colors["smooth_wall"], linewidth=2)
+    ax.axhline(baseline_wall, color="black", linestyle="--", linewidth=1.5)
+    ax.set_title(f"{algo_name.upper()} – Wall Collisions per Step")
+    ax.set_xlabel("Training Step")
+    ax.set_ylabel("Collisions")
+
+    # avoid overlapping x-ticks
+    for ax in axes:
+        ax.xaxis.set_major_locator(MaxNLocator(6))
+        ax.tick_params(axis='x', labelrotation=0)
+
+    # legend
+    handles = [
+        plt.Line2D([], [], color=colors["raw_reward"], alpha=0.4, linewidth=2, label="Raw"),
+        plt.Line2D([], [], color=colors["smooth_reward"], linewidth=2, label="Moving Average"),
+        plt.Line2D([], [], color="black", linestyle="--", linewidth=1.5, label="Baseline")
+    ]
+
+    fig.legend(
+        handles=handles,
+        loc="lower center",
+        ncol=3,
+        frameon=False,
+        fontsize=12,
+        bbox_to_anchor=(0.5, -0.08)
+    )
+
+    plt.tight_layout(rect=(0, 0.05, 1, 1))
 
     if save:
-        # Save PDF
         out_path = os.path.join(save_dir, f"{algo_name}_training_curves.pdf")
         plt.savefig(out_path, bbox_inches='tight')
         plt.close()
         print(f"Saved training curves for {algo_name.upper()} --> {out_path}")
-    plt.show()
+    else:
+        plt.show()
+
 
 
 def plot_comparison_curves(
@@ -145,67 +187,91 @@ def plot_comparison_curves(
     save=False,
     save_path="results/comparison_training_curves.pdf"
 ):
-    """
-    Plot comparison of PPO, A2C, and DDQN training curves.
-    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib.ticker import MaxNLocator
+
+    # Aesthetics
+    plt.rcParams.update({
+        "font.family": "serif",
+        "font.size": 12,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "axes.grid": True,
+        "grid.alpha": 0.25,
+        "legend.frameon": False,
+        "figure.dpi": 150
+    })
 
     # Unpack histories
     ppo_reward, ppo_fruits, ppo_wall = ppo_data
     a2c_reward, a2c_fruits, a2c_wall = a2c_data
     ddqn_reward, ddqn_fruits, ddqn_wall = ddqn_data
 
-    # Moving average kernel
+    # Moving average
     kernel = np.ones(window) / window
-
-    def smooth(x):
-        return np.convolve(x, kernel, mode='valid')
+    smooth = lambda x: np.convolve(x, kernel, mode='valid')
 
     # Smoothed curves
     ppo_r, ppo_f, ppo_w = smooth(ppo_reward), smooth(ppo_fruits), smooth(ppo_wall)
     a2c_r, a2c_f, a2c_w = smooth(a2c_reward), smooth(a2c_fruits), smooth(a2c_wall)
     ddqn_r, ddqn_f, ddqn_w = smooth(ddqn_reward), smooth(ddqn_fruits), smooth(ddqn_wall)
 
-    # Plot
-    plt.figure(figsize=(18, 5))
-    plt.rcParams.update({'font.size': 12})
+    colors = {
+        "A2C": "#1f77b4",
+        "DDQN": "#d62728",
+        "PPO": "#2ca02c"
+    }
 
-    # REWARD COMPARISON
-    plt.subplot(1, 3, 1)
-    plt.axhline(baseline_reward, color="black", linestyle="--", linewidth=2, label="Baseline")
-    plt.plot(a2c_r, label="A2C", linewidth=2)
-    plt.plot(ddqn_r, label="DDQN", linewidth=2)
-    plt.plot(ppo_r, label="PPO", linewidth=2)
-    plt.title("Reward per Step (Moving Average)")
-    plt.xlabel("Training Step")
-    plt.ylabel("Reward")
-    plt.grid(True, alpha=0.3)
-    plt.legend()
+    fig, axes = plt.subplots(1, 3, figsize=(17, 4))
 
-    # FRUITS COMPARISON
-    plt.subplot(1, 3, 2)
-    plt.axhline(baseline_fruits, color="black", linestyle="--", linewidth=2, label="Baseline")
-    plt.plot(a2c_f, label="A2C", linewidth=2)
-    plt.plot(ddqn_f, label="DDQN", linewidth=2)
-    plt.plot(ppo_f, label="PPO", linewidth=2)
-    plt.title("Fruits per Step (Moving Average)")
-    plt.xlabel("Training Step")
-    plt.ylabel("Fruits")
-    plt.grid(True, alpha=0.3)
-    plt.legend()
+    # --- REWARD ---
+    ax = axes[0]
+    ax.axhline(baseline_reward, color="black", linestyle="--", linewidth=1.5)
+    ax.plot(a2c_r, label="A2C", color=colors["A2C"], linewidth=2)
+    ax.plot(ddqn_r, label="DDQN", color=colors["DDQN"], linewidth=2)
+    ax.plot(ppo_r, label="PPO", color=colors["PPO"], linewidth=2)
+    ax.set_title("Reward per Step")
+    ax.set_xlabel("Training Step")
+    ax.set_ylabel("Reward")
 
-    # WALL COLLISIONS
-    plt.subplot(1, 3, 3)
-    plt.axhline(baseline_wall, color="black", linestyle="--", linewidth=2, label="Baseline")
-    plt.plot(a2c_w, label="A2C", linewidth=2)
-    plt.plot(ddqn_w, label="DDQN", linewidth=2)
-    plt.plot(ppo_w, label="PPO", linewidth=2)
-    plt.title("Wall Collisions per Step (Moving Average)")
-    plt.xlabel("Training Step")
-    plt.ylabel("Collisions")
-    plt.grid(True, alpha=0.3)
-    plt.legend()
+    # --- FRUITS ---
+    ax = axes[1]
+    ax.axhline(baseline_fruits, color="black", linestyle="--", linewidth=1.5)
+    ax.plot(a2c_f, color=colors["A2C"], linewidth=2)
+    ax.plot(ddqn_f, color=colors["DDQN"], linewidth=2)
+    ax.plot(ppo_f, color=colors["PPO"], linewidth=2)
+    ax.set_title("Fruits per Step")
+    ax.set_xlabel("Training Step")
+    ax.set_ylabel("Fruits")
 
-    plt.tight_layout()
+    # --- WALL COLLISIONS ---
+    ax = axes[2]
+    ax.axhline(baseline_wall, color="black", linestyle="--", linewidth=1.5)
+    ax.plot(a2c_w, color=colors["A2C"], linewidth=2)
+    ax.plot(ddqn_w, color=colors["DDQN"], linewidth=2)
+    ax.plot(ppo_w, color=colors["PPO"], linewidth=2)
+    ax.set_title("Wall Collisions per Step")
+    ax.set_xlabel("Training Step")
+    ax.set_ylabel("Collisions")
+
+    # Avoid overlapping x-ticks
+    for ax in axes:
+        ax.xaxis.set_major_locator(MaxNLocator(6))
+        ax.tick_params(axis='x', labelrotation=0)
+
+    # --- SINGLE GLOBAL LEGEND ---
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(
+        handles, labels,
+        loc="lower center",
+        ncol=4,
+        frameon=False,
+        fontsize=12,
+        bbox_to_anchor=(0.5, -0.05)
+    )
+
+    plt.tight_layout(rect=(0, 0.05, 1, 1))
 
     if save:
         plt.savefig(save_path, bbox_inches="tight")
@@ -213,6 +279,8 @@ def plot_comparison_curves(
         plt.close()
     else:
         plt.show()
+
+
 
 # Let the agent play the game
 def display_game(model, agent_name="Agent", max_steps=100):
@@ -240,7 +308,7 @@ def display_game(model, agent_name="Agent", max_steps=100):
                 logits = logits + mask * -1.0
                 actions = torch.argmax(logits, dim=1)
 
-            # DDQN AGENT (must detect BEFORE calling model)
+            # DDQN AGENT
             elif isinstance(model, DDQNNet):
                 s_tensor_nchw = state_tensor.permute(0, 3, 1, 2)
                 q_values = model(s_tensor_nchw)
@@ -259,9 +327,7 @@ def display_game(model, agent_name="Agent", max_steps=100):
 
         frames.append(game_env.boards[0].copy())
 
-    # -----------------------------------------
-    # 1. STATIC SNAPSHOTS
-    # -----------------------------------------
+    # STATIC SNAPSHOTS
     snapshot_steps = [0, 10, 20, 30, 40]
     snapshot_steps = [s for s in snapshot_steps if s < len(frames)]
 
@@ -274,9 +340,7 @@ def display_game(model, agent_name="Agent", max_steps=100):
 
     plt.show()
 
-    # -----------------------------------------
-    # 2. ANIMATION
-    # -----------------------------------------
+    # ANIMATION
     fig, ax = plt.subplots(figsize=(5, 5))
     plt.axis('off')
 

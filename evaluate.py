@@ -10,7 +10,7 @@ from agents import PPOAgent
 NUM_BOARDS = 1000
 BOARD_SIZE = 7
 EVAL_STEPS = 100
-SAVE_PLOTS = True
+SAVE_PLOTS = False
 
 # ===============
 # BASELINE POLICY
