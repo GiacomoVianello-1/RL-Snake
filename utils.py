@@ -167,7 +167,7 @@ def plot_training_curves(
     plt.tight_layout(rect=(0, 0.05, 1, 1))
 
     if save:
-        out_path = os.path.join(save_dir, f"{algo_name}_training_curves.pdf")
+        out_path = os.path.join(save_dir, f"{algo_name}_training_curves.png")
         plt.savefig(out_path, bbox_inches='tight')
         plt.close()
         print(f"Saved training curves for {algo_name.upper()} --> {out_path}")
@@ -185,7 +185,7 @@ def plot_comparison_curves(
     baseline_wall,
     window=200,
     save=False,
-    save_path="results/comparison_training_curves.pdf"
+    save_path="results/comparison_training_curves.png"
 ):
     import matplotlib.pyplot as plt
     import numpy as np

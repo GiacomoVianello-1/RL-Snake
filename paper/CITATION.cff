@@ -1,0 +1,10 @@
+@misc{giacomovianello_1_2026_18672815,
+  author       = {GiacomoVianello-1},
+  title        = {GiacomoVianello-1/RL-Snake: Initial release},
+  month        = feb,
+  year         = 2026,
+  publisher    = {Giacomo Vianello},
+  version      = {0.1.0},
+  doi          = {10.5281/zenodo.18672815},
+  url          = {https://doi.org/10.5281/zenodo.18672815},
+}

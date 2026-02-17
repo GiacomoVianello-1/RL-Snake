@@ -9,7 +9,7 @@ from agents import PPOAgent
 
 NUM_BOARDS = 1000
 BOARD_SIZE = 7
-EVAL_STEPS = 100
+EVAL_STEPS = 500
 SAVE_PLOTS = False
 
 # ===============
@@ -277,4 +277,4 @@ if __name__ == "__main__":
     # --- Play agent ---
     display_game(a2c_agent, agent_name="A2C", max_steps=100)
     display_game(ddqn_agent, agent_name="DDQN", max_steps=100)
-    display_game(ppo_agent, agent_name="PPO", max_steps=100)
+    display_game(ppo_agent, agent_name="PPO", max_steps=100) 

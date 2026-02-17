@@ -13,7 +13,7 @@ from agents import PPOAgent, RolloutBuffer
 # GLOBAL PARAMETERS
 NUM_BOARDS = 1000       
 BOARD_SIZE = 7          
-ITERATIONS = 10_000_000 
+ITERATIONS = 20_000_000 
 SAVE_RESULTS = False     
 
 
