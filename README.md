@@ -1,6 +1,7 @@
 # Deep Reinforcement Learning for Snake
 
 [![DOI](https://zenodo.org/badge/1145862637.svg)](https://doi.org/10.5281/zenodo.18672814)
+[![Technical Report](https://img.shields.io/badge/Paper-Technical_Report-orange?style=flat&logo=adobeacrobatreader&logoColor=white)](./paper/DRL_Snake_Project.pdf)
 
 This repository contains a PyTorch implementation of distinct Deep Reinforcement Learning (DRL) algorithms -- **Proximal Policy Optimization (PPO)**, **Advantage Actor-Critic (A2C)**, and **Double Deep Q-Network (DDQN)** -- applied to the classic game of Snake.
 
